@@ -184,7 +184,7 @@
     <button id="torchToggle" disabled>Torch: N/A</button>
     <div class="sliderRow">
       <span>Gain</span>
-      <input type="range" id="gainSlider" min="1" max="250" step="10" value="3">
+      <input type="range" id="gainSlider" min="1" max="250" step="1" value="3">
       <span id="gainSliderVal">3.0x</span>
     </div>
     <div class="sliderRow">
@@ -224,7 +224,7 @@ let contrast = 1.0; // post-boost contrast multiplier around midpoint
 let currentDeviceId = null;
 let currentExposureMode = 'continuous';
 let exposureModeBtn = null;
-const GAIN_STEP = 10.0, GAIN_MIN = 1.0, GAIN_MAX = 250.0;
+const GAIN_STEP = 1.0, GAIN_MIN = 1.0, GAIN_MAX = 250.0;
 const CONTRAST_STEP = 2.0, CONTRAST_MIN = 0.5, CONTRAST_MAX = 50.0;
 const camPicker = document.getElementById('camPicker');
 const exposurePanel = document.getElementById('exposurePanel');
