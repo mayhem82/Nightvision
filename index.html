@@ -73,20 +73,12 @@
     max-width: 80%;
     line-height: 1.5;
   }
-  #flash {
-    position: absolute;
-    inset: 0;
-    background: #fff;
-    opacity: 0;
-    pointer-events: none;
-  }
 </style>
 </head>
 <body>
 <div id="stage">
   <video id="video" playsinline autoplay muted></video>
   <canvas id="canvas"></canvas>
-  <div id="flash"></div>
   <div id="status">Requesting camera…</div>
   <div id="hud">
     <span id="mode">MODE: OFF</span>
@@ -114,7 +106,6 @@ const gainDownBtn = document.getElementById('gainDown');
 const captureBtn = document.getElementById('capture');
 const gainLabel = document.getElementById('gain');
 const modeLabel = document.getElementById('mode');
-const flashEl = document.getElementById('flash');
 
 let stream = null;
 let track = null;
@@ -283,10 +274,6 @@ gainDownBtn.addEventListener('click', () => {
 });
 
 captureBtn.addEventListener('click', () => {
-  flashEl.style.transition = 'opacity 0.1s';
-  flashEl.style.opacity = '0.5';
-  setTimeout(() => { flashEl.style.opacity = '0'; }, 100);
-
   const link = document.createElement('a');
   link.download = 'nightvision-' + Date.now() + '.png';
   link.href = canvas.toDataURL('image/png');
