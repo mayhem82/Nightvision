@@ -389,10 +389,9 @@ function applyNightVision() {
     // boost + gamma lift for low-light detail
     let boosted = Math.pow(lum / 255, 0.6) * 255 * (gain / 3.0);
     boosted = Math.min(255, boosted);
-    // green-channel night vision tint
-    d[i] = boosted * 0.15;
+    d[i] = boosted;
     d[i + 1] = boosted;
-    d[i + 2] = boosted * 0.15;
+    d[i + 2] = boosted;
   }
   ctx.putImageData(frame, 0, 0);
 }
