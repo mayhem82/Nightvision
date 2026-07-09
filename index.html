@@ -182,9 +182,6 @@ function setupTorchForTrack() {
     torchSupported = true;
     torchToggle.disabled = false;
     torchToggle.textContent = 'Torch: OFF';
-    // Night Vision mode is already on (e.g. after switching lenses) -
-    // keep the torch behavior consistent with the current mode.
-    if (nvOn) setTorch(true);
   } else {
     torchSupported = false;
     torchToggle.disabled = true;
@@ -270,9 +267,6 @@ nvToggle.addEventListener('click', () => {
   nvToggle.textContent = 'Night Vision: ' + (nvOn ? 'ON' : 'OFF');
   nvToggle.classList.toggle('active', nvOn);
   modeLabel.textContent = 'MODE: ' + (nvOn ? 'NIGHT VISION' : 'OFF');
-  // Torch stays on continuously with Night Vision mode instead of
-  // needing a separate manual tap each time.
-  setTorch(nvOn);
 });
 
 torchToggle.addEventListener('click', () => {
