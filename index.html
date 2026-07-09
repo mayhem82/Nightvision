@@ -308,25 +308,31 @@ function buildExposureControls() {
     exposurePanel.appendChild(modeBtn);
   }
 
+  // Night vision only ever needs the "brighter" half of each range -
+  // longer shutter, higher ISO, positive EV. Cut off the darkening half
+  // so all the slider's precision goes toward the useful direction.
   if (caps.exposureTime) {
-    const start = settings.exposureTime ?? Math.round((caps.exposureTime.min + caps.exposureTime.max) / 2);
-    exposurePanel.appendChild(makeExposureSlider('Shutter', caps.exposureTime, start, async (val) => {
+    const brightRange = { min: (caps.exposureTime.min + caps.exposureTime.max) / 2, max: caps.exposureTime.max, step: caps.exposureTime.step };
+    const start = Math.max(settings.exposureTime ?? brightRange.min, brightRange.min);
+    exposurePanel.appendChild(makeExposureSlider('Shutter', brightRange, start, async (val) => {
       if (currentExposureMode !== 'manual') await setExposureMode('manual');
       try { await track.applyConstraints({ advanced: [{ exposureTime: val }] }); } catch (err) {}
     }));
   }
 
   if (caps.iso) {
-    const start = settings.iso ?? Math.round((caps.iso.min + caps.iso.max) / 2);
-    exposurePanel.appendChild(makeExposureSlider('ISO', caps.iso, start, async (val) => {
+    const brightRange = { min: (caps.iso.min + caps.iso.max) / 2, max: caps.iso.max, step: caps.iso.step };
+    const start = Math.max(settings.iso ?? brightRange.min, brightRange.min);
+    exposurePanel.appendChild(makeExposureSlider('ISO', brightRange, start, async (val) => {
       if (currentExposureMode !== 'manual') await setExposureMode('manual');
       try { await track.applyConstraints({ advanced: [{ iso: val }] }); } catch (err) {}
     }));
   }
 
   if (caps.exposureCompensation) {
-    const start = settings.exposureCompensation ?? 0;
-    exposurePanel.appendChild(makeExposureSlider('EV', caps.exposureCompensation, start, async (val) => {
+    const brightRange = { min: Math.max(0, caps.exposureCompensation.min), max: caps.exposureCompensation.max, step: caps.exposureCompensation.step };
+    const start = Math.max(settings.exposureCompensation ?? 0, brightRange.min);
+    exposurePanel.appendChild(makeExposureSlider('EV', brightRange, start, async (val) => {
       try { await track.applyConstraints({ advanced: [{ exposureCompensation: val }] }); } catch (err) {}
     }));
   }
