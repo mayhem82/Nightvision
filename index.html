@@ -134,13 +134,16 @@
   <div id="status">Requesting camera…</div>
   <div id="hud">
     <span id="mode">MODE: OFF</span>
-    <span id="gain">GAIN: 1.0x</span>
+    <span id="gain">GAIN: 3.0x</span>
+    <span id="contrastLabel">CONTRAST: 1.0x</span>
   </div>
   <div id="controls">
     <button id="nvToggle">Night Vision: OFF</button>
     <button id="torchToggle" disabled>Torch: N/A</button>
     <button id="gainDown">Gain -</button>
     <button id="gainUp">Gain +</button>
+    <button id="contrastDown">Contrast -</button>
+    <button id="contrastUp">Contrast +</button>
     <button id="capture">Capture</button>
   </div>
   <div id="camPicker" style="position:absolute; top:44px; right:16px; display:flex; flex-direction:column; gap:6px;"></div>
@@ -156,8 +159,11 @@ const nvToggle = document.getElementById('nvToggle');
 const torchToggle = document.getElementById('torchToggle');
 const gainUpBtn = document.getElementById('gainUp');
 const gainDownBtn = document.getElementById('gainDown');
+const contrastUpBtn = document.getElementById('contrastUp');
+const contrastDownBtn = document.getElementById('contrastDown');
 const captureBtn = document.getElementById('capture');
 const gainLabel = document.getElementById('gain');
+const contrastLabel = document.getElementById('contrastLabel');
 const modeLabel = document.getElementById('mode');
 
 let stream = null;
@@ -166,10 +172,12 @@ let torchOn = false;
 let torchSupported = false;
 let nvOn = false;
 let gain = 3.0; // brightness multiplier
+let contrast = 1.0; // post-boost contrast multiplier around midpoint
 let currentDeviceId = null;
 let currentExposureMode = 'continuous';
 let exposureModeBtn = null;
-const GAIN_STEP = 0.5, GAIN_MIN = 1.0, GAIN_MAX = 8.0;
+const GAIN_STEP = 1.0, GAIN_MIN = 1.0, GAIN_MAX = 25.0;
+const CONTRAST_STEP = 0.2, CONTRAST_MIN = 0.5, CONTRAST_MAX = 5.0;
 const camPicker = document.getElementById('camPicker');
 const exposurePanel = document.getElementById('exposurePanel');
 
@@ -392,9 +400,10 @@ function applyNightVision() {
   for (let i = 0; i < d.length; i += 4) {
     // grayscale via luminance
     const lum = 0.299 * d[i] + 0.587 * d[i + 1] + 0.114 * d[i + 2];
-    // boost + gamma lift for low-light detail
-    let boosted = Math.pow(lum / 255, 0.6) * 255 * (gain / 3.0);
-    boosted = Math.min(255, boosted);
+    // gamma lift, then brightness gain, then contrast stretch around midpoint
+    let boosted = Math.pow(lum / 255, 0.5) * 255 * gain;
+    boosted = (boosted - 128) * contrast + 128;
+    boosted = Math.max(0, Math.min(255, boosted));
     d[i] = boosted;
     d[i + 1] = boosted;
     d[i + 2] = boosted;
@@ -420,6 +429,15 @@ gainUpBtn.addEventListener('click', () => {
 gainDownBtn.addEventListener('click', () => {
   gain = Math.max(GAIN_MIN, gain - GAIN_STEP);
   gainLabel.textContent = 'GAIN: ' + gain.toFixed(1) + 'x';
+});
+
+contrastUpBtn.addEventListener('click', () => {
+  contrast = Math.min(CONTRAST_MAX, contrast + CONTRAST_STEP);
+  contrastLabel.textContent = 'CONTRAST: ' + contrast.toFixed(1) + 'x';
+});
+contrastDownBtn.addEventListener('click', () => {
+  contrast = Math.max(CONTRAST_MIN, contrast - CONTRAST_STEP);
+  contrastLabel.textContent = 'CONTRAST: ' + contrast.toFixed(1) + 'x';
 });
 
 captureBtn.addEventListener('click', () => {
