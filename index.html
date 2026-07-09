@@ -125,6 +125,48 @@
     max-width: 150px;
     line-height: 1.4;
   }
+  .sliderRow {
+    width: 100%;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    justify-content: center;
+    color: #3f3;
+    font-size: 12px;
+    letter-spacing: 0.5px;
+    order: 2;
+  }
+  .sliderRow input[type="range"] {
+    -webkit-appearance: none;
+    flex: 1;
+    max-width: 240px;
+    height: 4px;
+    background: #1c2a1f;
+    border-radius: 2px;
+    outline: none;
+  }
+  .sliderRow input[type="range"]::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    width: 16px;
+    height: 16px;
+    border-radius: 50%;
+    background: #3f3;
+    box-shadow: 0 0 5px #3f3;
+    cursor: pointer;
+  }
+  .sliderRow input[type="range"]::-moz-range-thumb {
+    width: 16px;
+    height: 16px;
+    border-radius: 50%;
+    background: #3f3;
+    box-shadow: 0 0 5px #3f3;
+    cursor: pointer;
+    border: none;
+  }
+  .sliderRow span {
+    min-width: 90px;
+    text-align: center;
+  }
 </style>
 </head>
 <body>
@@ -142,8 +184,11 @@
     <button id="torchToggle" disabled>Torch: N/A</button>
     <button id="gainDown">Gain -</button>
     <button id="gainUp">Gain +</button>
-    <button id="contrastDown">Contrast -</button>
-    <button id="contrastUp">Contrast +</button>
+    <div class="sliderRow">
+      <span>Contrast</span>
+      <input type="range" id="contrastSlider" min="0.5" max="50" step="0.5" value="1">
+      <span id="contrastSliderVal">1.0x</span>
+    </div>
     <button id="capture">Capture</button>
   </div>
   <div id="camPicker" style="position:absolute; top:44px; right:16px; display:flex; flex-direction:column; gap:6px;"></div>
@@ -159,8 +204,8 @@ const nvToggle = document.getElementById('nvToggle');
 const torchToggle = document.getElementById('torchToggle');
 const gainUpBtn = document.getElementById('gainUp');
 const gainDownBtn = document.getElementById('gainDown');
-const contrastUpBtn = document.getElementById('contrastUp');
-const contrastDownBtn = document.getElementById('contrastDown');
+const contrastSlider = document.getElementById('contrastSlider');
+const contrastSliderVal = document.getElementById('contrastSliderVal');
 const captureBtn = document.getElementById('capture');
 const gainLabel = document.getElementById('gain');
 const contrastLabel = document.getElementById('contrastLabel');
@@ -431,12 +476,13 @@ gainDownBtn.addEventListener('click', () => {
   gainLabel.textContent = 'GAIN: ' + gain.toFixed(1) + 'x';
 });
 
-contrastUpBtn.addEventListener('click', () => {
-  contrast = Math.min(CONTRAST_MAX, contrast + CONTRAST_STEP);
-  contrastLabel.textContent = 'CONTRAST: ' + contrast.toFixed(1) + 'x';
-});
-contrastDownBtn.addEventListener('click', () => {
-  contrast = Math.max(CONTRAST_MIN, contrast - CONTRAST_STEP);
+contrastSlider.min = CONTRAST_MIN;
+contrastSlider.max = CONTRAST_MAX;
+contrastSlider.step = CONTRAST_STEP;
+contrastSlider.value = contrast;
+contrastSlider.addEventListener('input', () => {
+  contrast = parseFloat(contrastSlider.value);
+  contrastSliderVal.textContent = contrast.toFixed(1) + 'x';
   contrastLabel.textContent = 'CONTRAST: ' + contrast.toFixed(1) + 'x';
 });
 
