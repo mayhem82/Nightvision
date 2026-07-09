@@ -224,14 +224,14 @@ let contrast = 1.0; // post-boost contrast multiplier around midpoint
 let currentDeviceId = null;
 let currentExposureMode = 'continuous';
 let exposureModeBtn = null;
-const GAIN_MIN = 1.0, GAIN_MAX = 250.0, GAIN_RAW_MAX = 1000, GAIN_CURVE = 3;
+const GAIN_MIN = 1.0, GAIN_MAX = 9.0, GAIN_RAW_MAX = 1000, GAIN_CURVE = 3;
 const CONTRAST_STEP = 2.0, CONTRAST_MIN = 0.5, CONTRAST_MAX = 50.0;
 const camPicker = document.getElementById('camPicker');
 const exposurePanel = document.getElementById('exposurePanel');
 
 // The gain slider uses a raw 0-1000 position mapped through a cubic curve
-// so most of the drag distance covers the low, practically useful range
-// (1x-10x) with fine control, while the tail still reaches up to 250x.
+// so most of the drag distance covers the low end with fine control,
+// tapering up to the 9x ceiling at the far end.
 function rawToGain(raw) {
   const t = raw / GAIN_RAW_MAX;
   return GAIN_MIN + (GAIN_MAX - GAIN_MIN) * Math.pow(t, GAIN_CURVE);
