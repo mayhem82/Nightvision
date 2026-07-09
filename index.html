@@ -73,6 +73,58 @@
     max-width: 80%;
     line-height: 1.5;
   }
+  #exposurePanel {
+    position: absolute;
+    top: 44px;
+    left: 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    max-width: 160px;
+  }
+  #exposurePanel label {
+    color: #3f3;
+    font-size: 10px;
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+    background: rgba(10, 40, 10, 0.7);
+    padding: 6px 8px;
+    border-radius: 4px;
+    letter-spacing: 0.5px;
+  }
+  #exposurePanel input[type="range"] {
+    -webkit-appearance: none;
+    width: 100%;
+    height: 3px;
+    background: #1c2a1f;
+    border-radius: 2px;
+    outline: none;
+  }
+  #exposurePanel input[type="range"]::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    background: #3f3;
+    box-shadow: 0 0 4px #3f3;
+    cursor: pointer;
+  }
+  #exposurePanel input[type="range"]::-moz-range-thumb {
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    background: #3f3;
+    box-shadow: 0 0 4px #3f3;
+    cursor: pointer;
+    border: none;
+  }
+  #exposurePanel .unsupported {
+    color: #4d7a58;
+    font-size: 10px;
+    max-width: 150px;
+    line-height: 1.4;
+  }
 </style>
 </head>
 <body>
@@ -92,6 +144,7 @@
     <button id="capture">Capture</button>
   </div>
   <div id="camPicker" style="position:absolute; top:44px; right:16px; display:flex; flex-direction:column; gap:6px;"></div>
+  <div id="exposurePanel"></div>
 </div>
 
 <script>
@@ -114,8 +167,11 @@ let torchSupported = false;
 let nvOn = false;
 let gain = 3.0; // brightness multiplier
 let currentDeviceId = null;
+let currentExposureMode = 'continuous';
+let exposureModeBtn = null;
 const GAIN_STEP = 0.5, GAIN_MIN = 1.0, GAIN_MAX = 8.0;
 const camPicker = document.getElementById('camPicker');
+const exposurePanel = document.getElementById('exposurePanel');
 
 async function listBackCameras() {
   const devices = await navigator.mediaDevices.enumerateDevices();
@@ -161,6 +217,7 @@ async function switchCamera(deviceId) {
   await video.play();
   track = stream.getVideoTracks()[0];
   setupTorchForTrack();
+  buildExposureControls();
   resizeCanvas();
   buildCameraPicker();
 }
@@ -193,6 +250,92 @@ async function setTorch(on) {
   }
 }
 
+async function setExposureMode(mode) {
+  if (!track) return;
+  try {
+    await track.applyConstraints({ advanced: [{ exposureMode: mode }] });
+    currentExposureMode = mode;
+  } catch (err) {
+    // device advertised the mode but rejected switching to it; leave as-is
+  }
+  if (exposureModeBtn) {
+    exposureModeBtn.textContent = 'Exposure: ' + (currentExposureMode === 'manual' ? 'Manual' : 'Auto');
+    exposureModeBtn.classList.toggle('active', currentExposureMode === 'manual');
+  }
+}
+
+function makeExposureSlider(labelText, range, startVal, onChange) {
+  const wrap = document.createElement('label');
+  const valSpan = document.createElement('span');
+  valSpan.textContent = labelText + ': ' + startVal;
+  const input = document.createElement('input');
+  input.type = 'range';
+  input.min = range.min;
+  input.max = range.max;
+  input.step = range.step || 1;
+  input.value = startVal;
+  input.addEventListener('input', () => {
+    const val = parseFloat(input.value);
+    valSpan.textContent = labelText + ': ' + val;
+    onChange(val);
+  });
+  wrap.appendChild(valSpan);
+  wrap.appendChild(input);
+  return wrap;
+}
+
+function buildExposureControls() {
+  exposurePanel.innerHTML = '';
+  exposureModeBtn = null;
+  currentExposureMode = 'continuous';
+  if (!track || !track.getCapabilities) {
+    exposurePanel.innerHTML = '<div class="unsupported">Manual exposure not available on this browser</div>';
+    return;
+  }
+  const caps = track.getCapabilities();
+  const settings = track.getSettings ? track.getSettings() : {};
+  const supportsManual = Array.isArray(caps.exposureMode) && caps.exposureMode.includes('manual');
+
+  if (supportsManual) {
+    const modeBtn = document.createElement('button');
+    modeBtn.textContent = 'Exposure: Auto';
+    modeBtn.style.fontSize = '11px';
+    modeBtn.style.padding = '8px 10px';
+    modeBtn.addEventListener('click', () => {
+      setExposureMode(currentExposureMode === 'manual' ? 'continuous' : 'manual');
+    });
+    exposureModeBtn = modeBtn;
+    exposurePanel.appendChild(modeBtn);
+  }
+
+  if (caps.exposureTime) {
+    const start = settings.exposureTime ?? Math.round((caps.exposureTime.min + caps.exposureTime.max) / 2);
+    exposurePanel.appendChild(makeExposureSlider('Shutter', caps.exposureTime, start, async (val) => {
+      if (currentExposureMode !== 'manual') await setExposureMode('manual');
+      try { await track.applyConstraints({ advanced: [{ exposureTime: val }] }); } catch (err) {}
+    }));
+  }
+
+  if (caps.iso) {
+    const start = settings.iso ?? Math.round((caps.iso.min + caps.iso.max) / 2);
+    exposurePanel.appendChild(makeExposureSlider('ISO', caps.iso, start, async (val) => {
+      if (currentExposureMode !== 'manual') await setExposureMode('manual');
+      try { await track.applyConstraints({ advanced: [{ iso: val }] }); } catch (err) {}
+    }));
+  }
+
+  if (caps.exposureCompensation) {
+    const start = settings.exposureCompensation ?? 0;
+    exposurePanel.appendChild(makeExposureSlider('EV', caps.exposureCompensation, start, async (val) => {
+      try { await track.applyConstraints({ advanced: [{ exposureCompensation: val }] }); } catch (err) {}
+    }));
+  }
+
+  if (!exposurePanel.children.length) {
+    exposurePanel.innerHTML = '<div class="unsupported">No manual exposure controls on this device</div>';
+  }
+}
+
 async function initCamera() {
   try {
     stream = await navigator.mediaDevices.getUserMedia({
@@ -210,6 +353,7 @@ async function initCamera() {
     currentDeviceId = settings.deviceId || null;
 
     setupTorchForTrack();
+    buildExposureControls();
     statusEl.style.display = 'none';
     resizeCanvas();
     requestAnimationFrame(renderLoop);
