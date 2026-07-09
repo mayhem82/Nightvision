@@ -2,438 +2,291 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <title>Night Vision Cam</title>
 <style>
-  :root {
-    --bg: #05070a;
-    --panel: #0d1117;
-    --accent: #39ff6a;
-    --accent-dim: #1c7a37;
-    --text: #d7ffe0;
-  }
-  * { box-sizing: border-box; }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
   html, body {
-    margin: 0;
-    padding: 0;
-    background: var(--bg);
-    color: var(--text);
-    font-family: "SF Mono", "Consolas", "Menlo", monospace;
     height: 100%;
-    overflow-x: hidden;
-  }
-  body {
-    display: flex;
-    flex-direction: column;
-    min-height: 100vh;
-  }
-  header {
-    padding: 0.75rem 1rem;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    border-bottom: 1px solid #132015;
-    flex-wrap: wrap;
-    gap: 0.5rem;
-  }
-  h1 {
-    font-size: 1rem;
-    margin: 0;
-    letter-spacing: 0.08em;
-    text-transform: uppercase;
-    color: var(--accent);
-  }
-  #status {
-    font-size: 0.75rem;
-    color: #7fbf8e;
-  }
-  #status.error { color: #ff6a6a; }
-  main {
-    flex: 1;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    position: relative;
-    background: #000;
-    min-height: 40vh;
-  }
-  .stage {
-    position: relative;
-    width: 100%;
-    max-width: 900px;
-    aspect-ratio: 4 / 3;
     background: #000;
     overflow: hidden;
-    border-radius: 4px;
-    box-shadow: 0 0 0 1px var(--accent-dim), 0 0 40px rgba(57,255,106,0.08) inset;
+    font-family: 'Courier New', monospace;
+  }
+  #stage {
+    position: relative;
+    width: 100vw;
+    height: 100vh;
   }
   video { display: none; }
   canvas {
     width: 100%;
     height: 100%;
-    display: block;
+    object-fit: cover;
+    background: #000;
   }
-  .scanlines {
+  #hud {
     position: absolute;
-    inset: 0;
-    pointer-events: none;
-    background: repeating-linear-gradient(
-      to bottom,
-      rgba(0,0,0,0) 0px,
-      rgba(0,0,0,0.12) 1px,
-      rgba(0,0,0,0) 2px
-    );
-    mix-blend-mode: multiply;
-  }
-  .vignette {
-    position: absolute;
-    inset: 0;
-    pointer-events: none;
-    box-shadow: inset 0 0 120px 40px rgba(0,0,0,0.85);
-  }
-  .hud {
-    position: absolute;
-    top: 8px;
-    left: 8px;
-    right: 8px;
+    top: 0; left: 0; right: 0;
+    padding: 14px 16px;
+    color: #3f3;
+    font-size: 13px;
+    text-shadow: 0 0 4px #0f0;
     display: flex;
     justify-content: space-between;
-    font-size: 0.7rem;
-    color: var(--accent);
-    text-shadow: 0 0 4px rgba(57,255,106,0.8);
     pointer-events: none;
-    opacity: 0.85;
+    letter-spacing: 1px;
   }
-  #placeholder {
+  #controls {
     position: absolute;
-    inset: 0;
+    bottom: 0; left: 0; right: 0;
+    padding: 18px 16px calc(18px + env(safe-area-inset-bottom));
     display: flex;
-    align-items: center;
+    gap: 10px;
     justify-content: center;
-    text-align: center;
-    padding: 1.5rem;
-    color: #4d7a58;
-    font-size: 0.85rem;
-  }
-  footer {
-    padding: 0.75rem 1rem 1.25rem;
-    background: var(--panel);
-    border-top: 1px solid #132015;
-  }
-  .controls {
-    max-width: 900px;
-    margin: 0 auto;
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-    gap: 0.9rem 1.5rem;
-  }
-  .control {
-    display: flex;
-    flex-direction: column;
-    gap: 0.3rem;
-  }
-  .control label {
-    font-size: 0.7rem;
-    text-transform: uppercase;
-    letter-spacing: 0.06em;
-    color: #7fbf8e;
-    display: flex;
-    justify-content: space-between;
-  }
-  input[type="range"] {
-    -webkit-appearance: none;
-    width: 100%;
-    height: 4px;
-    background: #1c2a1f;
-    border-radius: 2px;
-    outline: none;
-  }
-  input[type="range"]::-webkit-slider-thumb {
-    -webkit-appearance: none;
-    width: 14px;
-    height: 14px;
-    border-radius: 50%;
-    background: var(--accent);
-    box-shadow: 0 0 6px var(--accent);
-    cursor: pointer;
-  }
-  input[type="range"]::-moz-range-thumb {
-    width: 14px;
-    height: 14px;
-    border-radius: 50%;
-    background: var(--accent);
-    box-shadow: 0 0 6px var(--accent);
-    cursor: pointer;
-    border: none;
-  }
-  .buttons {
-    max-width: 900px;
-    margin: 0.9rem auto 0;
-    display: flex;
-    gap: 0.6rem;
     flex-wrap: wrap;
+    background: linear-gradient(transparent, rgba(0,0,0,0.6));
   }
   button {
-    background: transparent;
-    border: 1px solid var(--accent-dim);
-    color: var(--accent);
-    padding: 0.55rem 1rem;
+    background: rgba(10, 40, 10, 0.85);
+    border: 1px solid #3f3;
+    color: #3f3;
+    padding: 10px 16px;
     font-family: inherit;
-    font-size: 0.75rem;
-    text-transform: uppercase;
-    letter-spacing: 0.06em;
-    border-radius: 3px;
-    cursor: pointer;
-    transition: background 0.15s, color 0.15s;
-  }
-  button:hover {
-    background: var(--accent);
-    color: #04120a;
+    font-size: 13px;
+    border-radius: 6px;
+    letter-spacing: 0.5px;
   }
   button.active {
-    background: var(--accent);
-    color: #04120a;
+    background: #3f3;
+    color: #000;
   }
-  a#snapshotLink {
-    display: none;
+  button:disabled {
+    opacity: 0.35;
+  }
+  #status {
+    position: absolute;
+    top: 50%; left: 50%;
+    transform: translate(-50%, -50%);
+    color: #3f3;
+    font-size: 13px;
+    text-align: center;
+    max-width: 80%;
+    line-height: 1.5;
+  }
+  #flash {
+    position: absolute;
+    inset: 0;
+    background: #fff;
+    opacity: 0;
+    pointer-events: none;
   }
 </style>
 </head>
 <body>
-
-<header>
-  <h1>Night Vision Cam</h1>
-  <span id="status">Initializing camera…</span>
-</header>
-
-<main>
-  <div class="stage">
-    <video id="video" autoplay playsinline muted></video>
-    <canvas id="canvas"></canvas>
-    <div class="scanlines"></div>
-    <div class="vignette"></div>
-    <div class="hud">
-      <span id="hudGain">GAIN</span>
-      <span id="hudRec">● REC</span>
-    </div>
-    <div id="placeholder">
-      Requesting camera access…<br>
-      If nothing happens, your browser blocked it — check the address bar for a camera permission prompt.
-    </div>
+<div id="stage">
+  <video id="video" playsinline autoplay muted></video>
+  <canvas id="canvas"></canvas>
+  <div id="flash"></div>
+  <div id="status">Requesting camera…</div>
+  <div id="hud">
+    <span id="mode">MODE: OFF</span>
+    <span id="gain">GAIN: 1.0x</span>
   </div>
-</main>
-
-<footer>
-  <div class="controls">
-    <div class="control">
-      <label>Gain (brightness) <span id="gainVal">3.0x</span></label>
-      <input type="range" id="gain" min="1" max="8" step="0.1" value="3">
-    </div>
-    <div class="control">
-      <label>Contrast <span id="contrastVal">1.4x</span></label>
-      <input type="range" id="contrast" min="0.5" max="3" step="0.05" value="1.4">
-    </div>
-    <div class="control">
-      <label>Gamma <span id="gammaVal">0.55</span></label>
-      <input type="range" id="gamma" min="0.2" max="1.5" step="0.01" value="0.55">
-    </div>
-    <div class="control">
-      <label>Noise reduction <span id="denoiseVal">2</span></label>
-      <input type="range" id="denoise" min="0" max="4" step="1" value="2">
-    </div>
+  <div id="controls">
+    <button id="nvToggle">Night Vision: OFF</button>
+    <button id="torchToggle" disabled>Torch: N/A</button>
+    <button id="gainDown">Gain -</button>
+    <button id="gainUp">Gain +</button>
+    <button id="capture">Capture</button>
   </div>
-  <div class="buttons">
-    <button id="modeToggle" class="active">Mode: Green Phosphor</button>
-    <button id="mirrorToggle">Mirror: Off</button>
-    <button id="snapshotBtn">Snapshot</button>
-    <a id="snapshotLink" download="night-vision-snapshot.png"></a>
-  </div>
-</footer>
+  <div id="camPicker" style="position:absolute; top:44px; right:16px; display:flex; flex-direction:column; gap:6px;"></div>
+</div>
 
 <script>
-(function () {
-  const video = document.getElementById('video');
-  const canvas = document.getElementById('canvas');
-  const ctx = canvas.getContext('2d', { willReadFrequently: true });
-  const statusEl = document.getElementById('status');
-  const placeholder = document.getElementById('placeholder');
+const video = document.getElementById('video');
+const canvas = document.getElementById('canvas');
+const ctx = canvas.getContext('2d', { willReadFrequently: true });
+const statusEl = document.getElementById('status');
+const nvToggle = document.getElementById('nvToggle');
+const torchToggle = document.getElementById('torchToggle');
+const gainUpBtn = document.getElementById('gainUp');
+const gainDownBtn = document.getElementById('gainDown');
+const captureBtn = document.getElementById('capture');
+const gainLabel = document.getElementById('gain');
+const modeLabel = document.getElementById('mode');
+const flashEl = document.getElementById('flash');
 
-  const gainInput = document.getElementById('gain');
-  const contrastInput = document.getElementById('contrast');
-  const gammaInput = document.getElementById('gamma');
-  const denoiseInput = document.getElementById('denoise');
-  const gainVal = document.getElementById('gainVal');
-  const contrastVal = document.getElementById('contrastVal');
-  const gammaVal = document.getElementById('gammaVal');
-  const denoiseVal = document.getElementById('denoiseVal');
-  const modeToggle = document.getElementById('modeToggle');
-  const mirrorToggle = document.getElementById('mirrorToggle');
-  const snapshotBtn = document.getElementById('snapshotBtn');
-  const snapshotLink = document.getElementById('snapshotLink');
+let stream = null;
+let track = null;
+let torchOn = false;
+let nvOn = false;
+let gain = 3.0; // brightness multiplier
+let currentDeviceId = null;
+const GAIN_STEP = 0.5, GAIN_MIN = 1.0, GAIN_MAX = 8.0;
+const camPicker = document.getElementById('camPicker');
 
-  let mode = 'green'; // 'green' | 'mono' | 'color'
-  let mirrored = false;
-  let rafId = null;
-  let prevFrame = null; // for temporal denoise averaging
+async function listBackCameras() {
+  const devices = await navigator.mediaDevices.enumerateDevices();
+  return devices.filter(d => d.kind === 'videoinput');
+}
 
-  // Precompute a gamma lookup table (0-255) rebuilt whenever gamma changes.
-  let gammaLUT = new Uint8ClampedArray(256);
-  function rebuildGammaLUT() {
-    const g = parseFloat(gammaInput.value);
-    for (let i = 0; i < 256; i++) {
-      gammaLUT[i] = Math.pow(i / 255, g) * 255;
-    }
-  }
-  rebuildGammaLUT();
+function labelForCamera(label, index) {
+  const l = label.toLowerCase();
+  if (l.includes('ultra') || l.includes('wide angle')) return 'Ultra-wide';
+  if (l.includes('tele')) return 'Telephoto';
+  if (l.includes('back') || l.includes('rear') || l.includes('environment')) return 'Main (wide)';
+  return 'Lens ' + (index + 1);
+}
 
-  function updateLabels() {
-    gainVal.textContent = parseFloat(gainInput.value).toFixed(1) + 'x';
-    contrastVal.textContent = parseFloat(contrastInput.value).toFixed(2) + 'x';
-    gammaVal.textContent = parseFloat(gammaInput.value).toFixed(2);
-    denoiseVal.textContent = denoiseInput.value;
-  }
-  updateLabels();
-
-  [gainInput, contrastInput, denoiseInput].forEach(el => el.addEventListener('input', updateLabels));
-  gammaInput.addEventListener('input', () => { updateLabels(); rebuildGammaLUT(); });
-
-  modeToggle.addEventListener('click', () => {
-    if (mode === 'green') { mode = 'mono'; modeToggle.textContent = 'Mode: Monochrome'; }
-    else if (mode === 'mono') { mode = 'color'; modeToggle.textContent = 'Mode: Amplified Color'; }
-    else { mode = 'green'; modeToggle.textContent = 'Mode: Green Phosphor'; }
+async function buildCameraPicker() {
+  const cams = await listBackCameras();
+  camPicker.innerHTML = '';
+  cams.forEach((cam, i) => {
+    const btn = document.createElement('button');
+    btn.textContent = labelForCamera(cam.label, i);
+    btn.style.fontSize = '11px';
+    btn.style.padding = '8px 10px';
+    if (cam.deviceId === currentDeviceId) btn.classList.add('active');
+    btn.addEventListener('click', () => switchCamera(cam.deviceId));
+    camPicker.appendChild(btn);
   });
+}
 
-  mirrorToggle.addEventListener('click', () => {
-    mirrored = !mirrored;
-    mirrorToggle.textContent = 'Mirror: ' + (mirrored ? 'On' : 'Off');
+async function switchCamera(deviceId) {
+  if (stream) {
+    stream.getTracks().forEach(t => t.stop());
+  }
+  currentDeviceId = deviceId;
+  stream = await navigator.mediaDevices.getUserMedia({
+    video: {
+      deviceId: { exact: deviceId },
+      width: { ideal: 1280 },
+      height: { ideal: 720 }
+    },
+    audio: false
   });
+  video.srcObject = stream;
+  await video.play();
+  track = stream.getVideoTracks()[0];
+  setupTorchForTrack();
+  resizeCanvas();
+  buildCameraPicker();
+}
 
-  snapshotBtn.addEventListener('click', () => {
-    canvas.toBlob(blob => {
-      const url = URL.createObjectURL(blob);
-      snapshotLink.href = url;
-      snapshotLink.click();
-      setTimeout(() => URL.revokeObjectURL(url), 5000);
-    }, 'image/png');
-  });
-
-  function setStatus(msg, isError) {
-    statusEl.textContent = msg;
-    statusEl.className = isError ? 'error' : '';
+function setupTorchForTrack() {
+  const caps = track.getCapabilities ? track.getCapabilities() : {};
+  torchOn = false;
+  torchToggle.classList.remove('active');
+  if (caps.torch) {
+    torchToggle.disabled = false;
+    torchToggle.textContent = 'Torch: OFF';
+  } else {
+    torchToggle.disabled = true;
+    torchToggle.textContent = 'Torch: unsupported';
   }
+}
 
-  async function startCamera() {
-    if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
-      setStatus('Camera API not available in this browser.', true);
-      placeholder.textContent = 'getUserMedia is not supported here. Try a modern browser over HTTPS.';
-      return;
-    }
-    try {
-      const stream = await navigator.mediaDevices.getUserMedia({
-        video: {
-          facingMode: { ideal: 'environment' },
-          width: { ideal: 1280 },
-          height: { ideal: 960 }
-        },
-        audio: false
-      });
-      video.srcObject = stream;
-      await video.play();
-      placeholder.style.display = 'none';
-      setStatus('Live — processing frames');
-      resizeCanvas();
-      rafId = requestAnimationFrame(processFrame);
-    } catch (err) {
-      setStatus('Camera access denied or unavailable: ' + err.message, true);
-      placeholder.textContent = 'Could not access the camera (' + err.message + '). Grant camera permission and reload.';
+async function initCamera() {
+  try {
+    stream = await navigator.mediaDevices.getUserMedia({
+      video: {
+        facingMode: { ideal: 'environment' },
+        width: { ideal: 1280 },
+        height: { ideal: 720 }
+      },
+      audio: false
+    });
+    video.srcObject = stream;
+    await video.play();
+    track = stream.getVideoTracks()[0];
+    const settings = track.getSettings ? track.getSettings() : {};
+    currentDeviceId = settings.deviceId || null;
+
+    setupTorchForTrack();
+    statusEl.style.display = 'none';
+    resizeCanvas();
+    requestAnimationFrame(renderLoop);
+    await buildCameraPicker();
+  } catch (err) {
+    statusEl.textContent = 'Camera access failed: ' + err.message +
+      '\nCheck site permissions (camera) in browser settings.';
+  }
+}
+
+function resizeCanvas() {
+  canvas.width = video.videoWidth || 1280;
+  canvas.height = video.videoHeight || 720;
+}
+video.addEventListener('loadedmetadata', resizeCanvas);
+
+function renderLoop() {
+  if (video.readyState >= 2) {
+    ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+    if (nvOn) {
+      applyNightVision();
     }
   }
+  requestAnimationFrame(renderLoop);
+}
 
-  function resizeCanvas() {
-    const w = video.videoWidth || 1280;
-    const h = video.videoHeight || 960;
-    canvas.width = w;
-    canvas.height = h;
+function applyNightVision() {
+  const frame = ctx.getImageData(0, 0, canvas.width, canvas.height);
+  const d = frame.data;
+  for (let i = 0; i < d.length; i += 4) {
+    // grayscale via luminance
+    const lum = 0.299 * d[i] + 0.587 * d[i + 1] + 0.114 * d[i + 2];
+    // boost + gamma lift for low-light detail
+    let boosted = Math.pow(lum / 255, 0.6) * 255 * (gain / 3.0);
+    boosted = Math.min(255, boosted);
+    // green-channel night vision tint
+    d[i] = boosted * 0.15;
+    d[i + 1] = boosted;
+    d[i + 2] = boosted * 0.15;
   }
+  ctx.putImageData(frame, 0, 0);
+}
 
-  video.addEventListener('loadedmetadata', resizeCanvas);
+nvToggle.addEventListener('click', () => {
+  nvOn = !nvOn;
+  nvToggle.textContent = 'Night Vision: ' + (nvOn ? 'ON' : 'OFF');
+  nvToggle.classList.toggle('active', nvOn);
+  modeLabel.textContent = 'MODE: ' + (nvOn ? 'NIGHT VISION' : 'OFF');
+});
 
-  function processFrame() {
-    if (video.readyState >= video.HAVE_CURRENT_DATA && canvas.width > 0) {
-      ctx.save();
-      if (mirrored) {
-        ctx.translate(canvas.width, 0);
-        ctx.scale(-1, 1);
-      }
-      ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
-      ctx.restore();
-
-      const frame = ctx.getImageData(0, 0, canvas.width, canvas.height);
-      applyNightVision(frame);
-      ctx.putImageData(frame, 0, 0);
-    }
-    rafId = requestAnimationFrame(processFrame);
+torchToggle.addEventListener('click', async () => {
+  if (!track) return;
+  torchOn = !torchOn;
+  try {
+    await track.applyConstraints({ advanced: [{ torch: torchOn }] });
+    torchToggle.textContent = 'Torch: ' + (torchOn ? 'ON' : 'OFF');
+    torchToggle.classList.toggle('active', torchOn);
+  } catch (err) {
+    torchToggle.textContent = 'Torch: failed';
+    torchOn = false;
   }
+});
 
-  function applyNightVision(frame) {
-    const data = frame.data;
-    const gain = parseFloat(gainInput.value);
-    const contrast = parseFloat(contrastInput.value);
-    const denoise = parseInt(denoiseInput.value, 10);
-    const contrastOffset = 128 * (1 - contrast);
+gainUpBtn.addEventListener('click', () => {
+  gain = Math.min(GAIN_MAX, gain + GAIN_STEP);
+  gainLabel.textContent = 'GAIN: ' + gain.toFixed(1) + 'x';
+});
+gainDownBtn.addEventListener('click', () => {
+  gain = Math.max(GAIN_MIN, gain - GAIN_STEP);
+  gainLabel.textContent = 'GAIN: ' + gain.toFixed(1) + 'x';
+});
 
-    // Temporal denoise: blend with previous frame to reduce sensor noise
-    // that gain amplification would otherwise make very visible.
-    const denoiseAlpha = denoise > 0 ? Math.min(0.85, denoise * 0.2) : 0;
-    if (denoiseAlpha > 0 && prevFrame && prevFrame.length === data.length) {
-      for (let i = 0; i < data.length; i += 4) {
-        data[i]     = data[i]     * (1 - denoiseAlpha) + prevFrame[i]     * denoiseAlpha;
-        data[i + 1] = data[i + 1] * (1 - denoiseAlpha) + prevFrame[i + 1] * denoiseAlpha;
-        data[i + 2] = data[i + 2] * (1 - denoiseAlpha) + prevFrame[i + 2] * denoiseAlpha;
-      }
-    }
+captureBtn.addEventListener('click', () => {
+  flashEl.style.transition = 'opacity 0.1s';
+  flashEl.style.opacity = '0.5';
+  setTimeout(() => { flashEl.style.opacity = '0'; }, 100);
 
-    for (let i = 0; i < data.length; i += 4) {
-      let r = data[i];
-      let g = data[i + 1];
-      let b = data[i + 2];
+  const link = document.createElement('a');
+  link.download = 'nightvision-' + Date.now() + '.png';
+  link.href = canvas.toDataURL('image/png');
+  link.click();
+});
 
-      // Luminance-based amplification (simulates image-intensifier gain).
-      let lum = 0.299 * r + 0.587 * g + 0.114 * b;
-      lum = gammaLUT[Math.round(Math.min(255, Math.max(0, lum)))];
-      lum = lum * gain;
-      lum = lum * contrast + contrastOffset;
-      lum = Math.min(255, Math.max(0, lum));
-
-      if (mode === 'color') {
-        // Amplify original channels individually instead of collapsing to luminance.
-        r = Math.min(255, Math.max(0, gammaLUT[r] * gain * contrast + contrastOffset));
-        g = Math.min(255, Math.max(0, gammaLUT[g] * gain * contrast + contrastOffset));
-        b = Math.min(255, Math.max(0, gammaLUT[b] * gain * contrast + contrastOffset));
-        data[i] = r; data[i + 1] = g; data[i + 2] = b;
-      } else if (mode === 'mono') {
-        data[i] = lum; data[i + 1] = lum; data[i + 2] = lum;
-      } else {
-        // green phosphor: real amplified luminance driven into the green
-        // channel, with red/blue suppressed — not a flat overlay.
-        data[i] = lum * 0.08;
-        data[i + 1] = lum;
-        data[i + 2] = lum * 0.12;
-      }
-    }
-
-    prevFrame = denoiseAlpha > 0 ? Uint8ClampedArray.from(data) : null;
-  }
-
-  startCamera();
-
-  window.addEventListener('beforeunload', () => {
-    if (rafId) cancelAnimationFrame(rafId);
-    const stream = video.srcObject;
-    if (stream) stream.getTracks().forEach(t => t.stop());
-  });
-})();
+initCamera();
 </script>
-
 </body>
 </html>
