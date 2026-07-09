@@ -119,6 +119,7 @@ const flashEl = document.getElementById('flash');
 let stream = null;
 let track = null;
 let torchOn = false;
+let torchSupported = false;
 let nvOn = false;
 let gain = 3.0; // brightness multiplier
 let currentDeviceId = null;
@@ -178,11 +179,29 @@ function setupTorchForTrack() {
   torchOn = false;
   torchToggle.classList.remove('active');
   if (caps.torch) {
+    torchSupported = true;
     torchToggle.disabled = false;
     torchToggle.textContent = 'Torch: OFF';
+    // Night Vision mode is already on (e.g. after switching lenses) -
+    // keep the torch behavior consistent with the current mode.
+    if (nvOn) setTorch(true);
   } else {
+    torchSupported = false;
     torchToggle.disabled = true;
     torchToggle.textContent = 'Torch: unsupported';
+  }
+}
+
+async function setTorch(on) {
+  if (!track || !torchSupported) return;
+  try {
+    await track.applyConstraints({ advanced: [{ torch: on }] });
+    torchOn = on;
+    torchToggle.textContent = 'Torch: ' + (torchOn ? 'ON' : 'OFF');
+    torchToggle.classList.toggle('active', torchOn);
+  } catch (err) {
+    torchToggle.textContent = 'Torch: failed';
+    torchOn = false;
   }
 }
 
@@ -251,19 +270,13 @@ nvToggle.addEventListener('click', () => {
   nvToggle.textContent = 'Night Vision: ' + (nvOn ? 'ON' : 'OFF');
   nvToggle.classList.toggle('active', nvOn);
   modeLabel.textContent = 'MODE: ' + (nvOn ? 'NIGHT VISION' : 'OFF');
+  // Torch stays on continuously with Night Vision mode instead of
+  // needing a separate manual tap each time.
+  setTorch(nvOn);
 });
 
-torchToggle.addEventListener('click', async () => {
-  if (!track) return;
-  torchOn = !torchOn;
-  try {
-    await track.applyConstraints({ advanced: [{ torch: torchOn }] });
-    torchToggle.textContent = 'Torch: ' + (torchOn ? 'ON' : 'OFF');
-    torchToggle.classList.toggle('active', torchOn);
-  } catch (err) {
-    torchToggle.textContent = 'Torch: failed';
-    torchOn = false;
-  }
+torchToggle.addEventListener('click', () => {
+  setTorch(!torchOn);
 });
 
 gainUpBtn.addEventListener('click', () => {
