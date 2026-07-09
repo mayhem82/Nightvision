@@ -182,8 +182,11 @@
   <div id="controls">
     <button id="nvToggle">Night Vision: OFF</button>
     <button id="torchToggle" disabled>Torch: N/A</button>
-    <button id="gainDown">Gain -</button>
-    <button id="gainUp">Gain +</button>
+    <div class="sliderRow">
+      <span>Gain</span>
+      <input type="range" id="gainSlider" min="1" max="250" step="10" value="3">
+      <span id="gainSliderVal">3.0x</span>
+    </div>
     <div class="sliderRow">
       <span>Contrast</span>
       <input type="range" id="contrastSlider" min="0.5" max="50" step="0.5" value="1">
@@ -202,8 +205,8 @@ const ctx = canvas.getContext('2d', { willReadFrequently: true });
 const statusEl = document.getElementById('status');
 const nvToggle = document.getElementById('nvToggle');
 const torchToggle = document.getElementById('torchToggle');
-const gainUpBtn = document.getElementById('gainUp');
-const gainDownBtn = document.getElementById('gainDown');
+const gainSlider = document.getElementById('gainSlider');
+const gainSliderVal = document.getElementById('gainSliderVal');
 const contrastSlider = document.getElementById('contrastSlider');
 const contrastSliderVal = document.getElementById('contrastSliderVal');
 const captureBtn = document.getElementById('capture');
@@ -467,12 +470,13 @@ torchToggle.addEventListener('click', () => {
   setTorch(!torchOn);
 });
 
-gainUpBtn.addEventListener('click', () => {
-  gain = Math.min(GAIN_MAX, gain + GAIN_STEP);
-  gainLabel.textContent = 'GAIN: ' + gain.toFixed(1) + 'x';
-});
-gainDownBtn.addEventListener('click', () => {
-  gain = Math.max(GAIN_MIN, gain - GAIN_STEP);
+gainSlider.min = GAIN_MIN;
+gainSlider.max = GAIN_MAX;
+gainSlider.step = GAIN_STEP;
+gainSlider.value = gain;
+gainSlider.addEventListener('input', () => {
+  gain = parseFloat(gainSlider.value);
+  gainSliderVal.textContent = gain.toFixed(1) + 'x';
   gainLabel.textContent = 'GAIN: ' + gain.toFixed(1) + 'x';
 });
 
