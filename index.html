@@ -274,10 +274,17 @@ gainDownBtn.addEventListener('click', () => {
 });
 
 captureBtn.addEventListener('click', () => {
-  const link = document.createElement('a');
-  link.download = 'nightvision-' + Date.now() + '.png';
-  link.href = canvas.toDataURL('image/png');
-  link.click();
+  canvas.toBlob((blob) => {
+    if (!blob) return;
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.download = 'nightvision-' + Date.now() + '.png';
+    link.href = url;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    setTimeout(() => URL.revokeObjectURL(url), 5000);
+  }, 'image/png');
 });
 
 initCamera();
